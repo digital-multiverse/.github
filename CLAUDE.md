@@ -13,9 +13,9 @@ Each repo's own `CLAUDE.md` imports this file and adds repo-specific context.
 - **Auth:** Auth0 (OAuth2) via unified Provider Factory
 - **Styling:** Tailwind CSS — utility-first, dark mode, glassmorphism tokens
 - **Package manager:** Yarn Berry
-- **Runtime:** Node v24
-- **CI/CD:** Reusable workflows from `github-workflows` repo; composite actions from `github-actions` repo
-- **Versioning:** Conventional Commits + semantic-release (semantic-release-action v6)
+- **Runtime:** Node 24
+- **CI/CD:** Reusable workflows from `github-workflows`; composite actions from `github-actions`
+- **Versioning:** Conventional Commits + semantic-release
 - **Testing:** Vitest (unit) + Playwright (E2E)
 - **Validation:** Zod for payload validation on Node backends
 
@@ -32,77 +32,114 @@ Each repo's own `CLAUDE.md` imports this file and adds repo-specific context.
 
 ## Automatic Workflow Selection
 
-Claude selects the workflow automatically based on context. No slash command needed.
+On session start, Claude always does this first:
 
-### On session start — always do this first
-
-1. Check if `_workflow/session-notes.md` exists. If not, create it from the template.
-2. Check if `BACKLOG.md` exists and read it.
-3. Detect the session type (see below) and activate the corresponding workflow.
-4. Announce which workflow you are activating and why, then proceed.
+1. Check `.claude/local/.prompt` — if it exists, read it and resume from that state.
+2. Check `BACKLOG.md` — if it exists, identify highest priority pending task.
+3. Detect session type and activate the appropriate workflow (see table below).
+4. Announce which workflow is activating and why, then proceed.
 
 ### Session type detection
 
-| Situation | Workflow activated |
+| Situation | Workflow |
 |---|---|
-| User describes a new project or epic with no existing `BACKLOG.md` | `/init-project` — PM → PO → BA |
-| `BACKLOG.md` exists and user describes a task or says "let's work on X" | `/dev` — full delivery loop |
-| `BACKLOG.md` exists and user says nothing specific | Ask: "Which task from the backlog?" then activate `/dev` |
-| User asks for a review of existing code | `/review` persona only |
-| User asks an architecture question | `/architect` persona only |
-| User asks to write or fix tests | `/qa` persona only |
-| User asks to plan/groom the backlog | `/po` persona only |
-| Conversational question (no code task) | Answer directly, no workflow |
+| No `BACKLOG.md` exists | `/init-project` — PM → PO → BA |
+| `BACKLOG.md` exists, user names a task | `/dev` — full delivery loop |
+| `BACKLOG.md` exists, no task specified | Show top 3 items, ask which one, then `/dev` |
+| Active spec in `docs/specs/` is incomplete | Propose continuing spec before backlog |
+| User asks for code review only | `@review` agent only |
+| User asks architecture question | `@architect` agent only |
+| User asks to write/fix tests | `@qa` agent only |
+| User asks to commit | `@commit` skill |
+| User asks to refactor | `@refactor` skill |
+| Conversational question | Answer directly, no workflow |
 
-### Guideline selection
+### Guideline loading (selective — not all at once)
 
-Load guidelines automatically based on the files being touched — do not load all at once:
-
-| Files touched | Guidelines loaded |
+| Files being touched | Guidelines loaded |
 |---|---|
-| `*.tsx`, `*.jsx`, SolidJS components | `frontend-solidjs.md` + `typescript.md` + `clean-code.md` |
-| `*.ts` services, hooks, utilities | `typescript.md` + `clean-code.md` + `error-handling.md` |
-| `*.test.ts`, `*.spec.ts` | `testing.md` + `clean-code.md` |
-| Database, SurrealDB, auth files | `backend-surrealdb.md` + `security.md` |
-| `*.rs` Rust files | `clean-code.md` + `error-handling.md` + `security.md` |
-| Git operations, commits | `git-workflow.md` |
-| Any security-sensitive change | `security.md` always |
+| `*.tsx`, `*.jsx`, SolidJS components | `frontend-solidjs` + `typescript` + `clean-code` |
+| `*.ts` services, hooks, utilities | `typescript` + `clean-code` + `error-handling` |
+| `*.test.ts`, `*.spec.ts` | `testing` + `clean-code` |
+| Database, SurrealDB, auth files | `backend-surrealdb` + `security` |
+| `*.rs` Rust files | `clean-code` + `error-handling` + `security` |
+| Git operations, commits | `git-workflow` |
+| JSDoc, documentation | `jsdoc` + `code-comments` |
+| Any security-sensitive change | `security` always |
 
 ---
 
-## Agentic Workflow
+## Agentic Workflow — Subagents
 
-### Available slash commands (also auto-activated — see above)
+Invoke with `@name`. Each subagent has its own focused context.
+
+| Subagent | Invoke | When |
+|---|---|---|
+| Architect | `@architect` | Structural changes, ADR creation |
+| Staff Engineer | `@staff` | Feasibility assessment, implementation planning |
+| Senior Engineer | `@senior` | Code implementation (agentic loop) |
+| Code Review | `@review` | Post-implementation review |
+| QA | `@qa` | Test execution and validation |
+| PM | `@pm` | Project scope and roadmap |
+| PO | `@po` | Backlog grooming, user stories |
+| BA | `@ba` | Requirements analysis, edge cases |
+
+### Slash commands (full workflows)
 
 | Command | Description |
 |---|---|
-| `/init-project` | Start a new project: PM → PO → BA produce roadmap + backlog |
-| `/dev` | Development loop: Architect → Staff → Senior → Code Review → QA → commit |
-| `/architect` | Run only the Architect persona |
-| `/staff` | Run only the Staff Engineer persona |
-| `/senior` | Run only the Senior Engineer persona |
-| `/review` | Run only the Code Review persona |
-| `/qa` | Run only the QA persona |
-| `/pm` | Run only the PM persona |
-| `/po` | Run only the PO persona |
-| `/ba` | Run only the BA persona |
+| `/init-project` | PM → PO → BA → produces `BACKLOG.md` |
+| `/dev` | Architect → Staff → Senior → Review → QA → commit |
 
 ### Session notes & artefacts
 
-Every persona writes its decisions to `_workflow/session-notes.md` with a timestamp
-before passing to the next. This file is the audit trail — commit it alongside code.
-
-Architect and Staff Engineer also create artefact files in:
+Every subagent appends to `_workflow/session-notes.md` with a timestamp.
+Architect and Staff also create artefact files in:
 `.agents/architecture/apps/{app}/Sprint {N}/Task {M} - {title}/`
+
+### Local session state (`.claude/local/.prompt`)
+
+At the END of each session, or when recommending a new session, Claude:
+
+1. Writes `.claude/local/.prompt` with the current session state.
+2. Notifies the user: "Session state saved to `.claude/local/.prompt`. Start your next session with `claude` and I'll resume from here."
+
+This file is gitignored (`.claude/local/` is in `.gitignore`). It contains:
+- Active branch
+- Current task in progress
+- Last decision made
+- Immediate next step
+- Any blockers
 
 ### ADRs
 
-Major architectural decisions get an ADR at `docs/adr/{NNN}-{topic}.md`.
-The Architect persona creates these automatically when needed.
+Major architectural decisions → `docs/adr/{NNN}-{topic}.md`.
+The `@architect` subagent creates these automatically.
 
 ---
 
-## Guidelines (available for selective loading)
+## Skills (invoke on demand)
+
+| Skill | When to use |
+|---|---|
+| `@commit` | Analysing staged changes and writing conventional commit message |
+| `@refactor` | Systematic codebase refactoring against standards |
+| `@coverage` | Increasing unit test coverage to target threshold |
+| `@review-mr` | Full merge request review with structured report |
+| `@create-adr` | Creating a well-structured Architecture Decision Record |
+| `@add-jsdoc` | Adding JSDoc to all exported APIs in a file or folder |
+| `@debug` | Systematic debugging of a reported issue |
+
+---
+
+## Path-scoped rules (auto-loaded by file type)
+
+See `.claude/rules/` for rules that activate automatically based on file patterns.
+These complement the guidelines above — they are concise, file-type-specific constraints.
+
+---
+
+## Guidelines (reference library — loaded selectively)
 
 @.claude/guidelines/clean-code.md
 @.claude/guidelines/git-workflow.md
@@ -112,3 +149,6 @@ The Architect persona creates these automatically when needed.
 @.claude/guidelines/error-handling.md
 @.claude/guidelines/frontend-solidjs.md
 @.claude/guidelines/backend-surrealdb.md
+@.claude/guidelines/jsdoc.md
+@.claude/guidelines/code-comments.md
+@.claude/guidelines/biome.md
