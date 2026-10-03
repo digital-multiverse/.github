@@ -1,0 +1,29 @@
+# Session State — {repo-name}
+
+> This file is local only (.gitignored). It persists context between Claude Code sessions.
+> Claude reads this at session start to resume from where you left off.
+> Updated automatically at session end or when a new session is recommended.
+
+---
+
+## Last updated
+{timestamp}
+
+## Active branch
+{branch-name}
+
+## Current task
+{task-id} — {task-title}
+Status: {In Progress / Blocked / Ready for Review}
+
+## Last decision made
+{what was decided and why — one line}
+
+## Immediate next step
+{exactly what to do when reopening this session — be specific}
+
+## Blockers (if any)
+{blocker description or "None"}
+
+## Context notes
+{anything else Claude should know to resume effectively}
