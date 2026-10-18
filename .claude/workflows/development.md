@@ -9,7 +9,7 @@ Personas run as subagents. Each appends to `_workflow/session-notes.md`.
 
 ## Pre-flight
 
-1. Check `.claude/local/.prompt` — if it exists, read it and ask:
+1. Check `.claude/local/context.md` — if it exists, read it and ask:
    "Resume task {task} on branch {branch}? [Y/n]"
 2. If new session: ask "Which task from `BACKLOG.md`?"
 3. Write task to `_workflow/current-task.md`.
@@ -92,7 +92,7 @@ Append to `_workflow/session-notes.md`:
 
 ## Session end — always do this
 
-After completing a task OR when recommending a new session, write `.claude/local/.prompt`:
+After completing a task OR when recommending a new session, write `.claude/local/context.md`:
 
 ```markdown
 # Session State — {repo-name}
@@ -107,14 +107,14 @@ Blockers: {description or "None"}
 ```
 
 Then notify the user:
-> "✅ Session state saved to `.claude/local/.prompt`.
+> "✅ Session state saved to `.claude/local/context.md`.
 >  Next session: run `claude` in this repo and I'll resume from here."
 
 ---
 
 ## When to recommend a new session
 
-Recommend (and write `.prompt`) when:
+Recommend (and write `context.md`) when:
 - A phase takes longer than expected and context is getting large
 - A blocker requires user decision before continuing
 - The task is complete and the next task is unrelated
@@ -131,4 +131,4 @@ Recommend (and write `.prompt`) when:
 | @review | @senior | 3 |
 | @qa | @senior | 2 |
 
-If max cycles exceeded: stop, document blocker in `session-notes.md`, write `.prompt`, notify user.
+If max cycles exceeded: stop, document blocker in `session-notes.md`, write `context.md`, notify user.

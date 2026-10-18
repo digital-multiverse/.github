@@ -34,7 +34,7 @@ Each repo's own `CLAUDE.md` imports this file and adds repo-specific context.
 
 On session start, Claude always does this first:
 
-1. Check `.claude/local/.prompt` — if it exists, read it and resume from that state.
+1. Check `.claude/local/context.md` — if it exists, read it and resume from that state.
 2. Check `BACKLOG.md` — if it exists, identify highest priority pending task.
 3. Detect session type and activate the appropriate workflow (see table below).
 4. Announce which workflow is activating and why, then proceed.
@@ -97,12 +97,12 @@ Every subagent appends to `_workflow/session-notes.md` with a timestamp.
 Architect and Staff also create artefact files in:
 `.agents/architecture/apps/{app}/Sprint {N}/Task {M} - {title}/`
 
-### Local session state (`.claude/local/.prompt`)
+### Local session state (`.claude/local/context.md`)
 
 At the END of each session, or when recommending a new session, Claude:
 
-1. Writes `.claude/local/.prompt` with the current session state.
-2. Notifies the user: "Session state saved to `.claude/local/.prompt`. Start your next session with `claude` and I'll resume from here."
+1. Writes `.claude/local/context.md` with the current session state.
+2. Notifies the user: "Session state saved to `.claude/local/context.md`. Start your next session with `claude` and I'll resume from here."
 
 This file is gitignored (`.claude/local/` is in `.gitignore`). It contains:
 - Active branch
