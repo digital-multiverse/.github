@@ -14,7 +14,7 @@ We want Digital Multiverse to be a welcoming, harassment-free space for everyone
 - Publishing others' private information without consent.
 
 ## Reporting
-Report unacceptable behavior privately to **conduct@digital-multiverse.dev**.
+Report unacceptable behavior privately to **info@digital-multiverse.com**.
 All reports are reviewed and handled confidentially.
 
 ## Enforcement

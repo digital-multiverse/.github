@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 Please **do not** open a public issue for security problems.
 
-Email **security@digital-multiverse.dev** with:
+Email **info@digital-multiverse.com** with:
 - A description of the issue
 - Steps to reproduce
 - Potential impact
