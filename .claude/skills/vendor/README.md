@@ -9,6 +9,7 @@ commit, license, local changes) and the upstream `LICENSE`.
 | `marketingskills/` | coreyhaines31/marketingskills | ~45 marketing skills: SEO audit, AI search, schema, copywriting, CRO, ads, analytics, content strategy |
 | `no-ai-slop/` | petergyang/no-ai-slop | Strip AI-writing patterns from prose |
 | `taste-skill/` | Leonxlnx/taste-skill | Anti-generic frontend design rules (several style variants) |
+| `frontend-design/` | anthropics/claude-plugins-official | Anthropic's design-direction skill (replaces the auto-updating marketplace plugin) |
 
 Skills live at `<folder>/skills/<skill>/SKILL.md`. Claude Code only auto-discovers skills in
 `~/.claude/skills/<name>/` or a project's `.claude/skills/<name>/`, so to enable one, symlink it:
@@ -20,5 +21,8 @@ ln -s /mnt/hdd/repositories/.github/.claude/skills/vendor/no-ai-slop/skills/no-a
 Healthcare sites (e.g. elenapastorpsicologia): marketing advice on urgency, popups, testimonials
 and ad claims must be filtered against the psychologists' code of ethics and Google's
 healthcare ad policies.
+
+Our own skills (`design`, `design-review`, `a11y`) live one level up in `.claude/skills/<name>/`
+and are symlinked the same way. They build on these vendored ones instead of copying them.
 
 Update policy: never pull blindly. Clone upstream, diff, review, copy, bump the commit in `SOURCE.md`.
