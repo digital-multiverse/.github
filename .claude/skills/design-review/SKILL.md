@@ -41,12 +41,20 @@ next one can say what got better.
 ## 1. Intent to judge against (D)
 
 **First find what is live.** The checkout may be on an unmerged branch whose BACKLOG
-already marks things ✅. Find the deployed commit (the branch the host builds, usually
-`main`; for Workers Builds and WordPress check the intent file), then check the live HTML
-matches it, e.g. `diff <(git show main:index.html) <(curl -s <url>)` (only injected scripts
-should differ). From then on read code, BACKLOG and docs at that commit with
-`git show <live>:<path>`, and say in the report when a branch claims fixes that aren't
-deployed.
+already marks things ✅, or the live site may be an older or hand-uploaded build.
+
+1. **Which source serves the domain:** the intent file says; if it doesn't, grep the
+   `routes`/custom domains in every `wrangler.jsonc`/`wrangler.toml` of the repo (a repo can
+   hold several sites: remembart's landing is `web/`, not `app-site/`).
+2. **Which commit:** for a git-built host (Workers Builds), the branch it builds. Check the
+   live HTML matches: for hand-written HTML, `diff <(git show main:index.html) <(curl …)`;
+   for built sites, build that commit locally and diff the output. If nothing matches,
+   take a distinctive string from the live HTML and run `git log --all -S '<string>'`, and
+   use `last-modified` to date it. If it still doesn't match any commit, write "live
+   commit: unknown" in the header: an undeployable or untraceable live site is itself a
+   finding.
+3. From then on read code, BACKLOG and docs at the live commit with `git show <live>:<path>`,
+   and say when a branch claims fixes that aren't deployed.
 
 Read `docs/design-intent.md` in the project repo: what the site is, audience, CTAs,
 promises, **what it must not say**, languages, links, where each page type is generated.
@@ -59,6 +67,10 @@ If the intent file is missing, create it first as the `design` skill describes (
 `~/.claude/skills/design/references/design-intent-template.md`, questions to the user in
 one batch, OK before writing it into the repo). Reviewing without it means judging
 against your own guess of the goal, which is the failure this whole setup avoids.
+When the user can't answer now (a batch of reviews, a background run), draft it into the
+scratchpad from the repo and the live site, mark every inferred fact "(assumed)", list the
+questions at its end, and tag findings that rest on an assumption ("H, assumed"). The
+draft goes into the repo only after the user answers.
 
 ## 2. The six lenses
 
@@ -71,18 +83,31 @@ against your own guess of the goal, which is the failure this whole setup avoids
 3. **Copy and languages.** Anything from "What we must not say"; promises the docs don't
    support (features, dates, prices, money); repeated messages; jargon a newcomer can't
    read. Per locale: leftover English, literal translations, a switcher visible without
-   scrolling, text that breaks the layout in the longest locale.
-4. **Accessibility beyond Lighthouse.** Text < 12 px, targets < 44 px (and anything < 24 px
-   fails WCAG 2.2 AA outright), broken `aria-*` references, content hidden until JS runs,
+   scrolling, text that breaks the layout in the longest locale. **Freshness:** dates,
+   statuses ("closed beta", "coming soon", deadlines) and figures checked against today
+   and against the other project sites, which often disagree; sources checked against the
+   project's own sourcing rules (CLAUDE.md, intent file). On news or data sites this is
+   where the most important findings are.
+4. **Accessibility beyond Lighthouse.** Text < 12 px, targets < 44 px (under 24 px fails
+   WCAG 2.2 AA unless the 2.5.8 spacing or inline-link exception applies: check before
+   tagging it a WCAG failure), broken `aria-*` references, content hidden until JS runs,
    `prefers-reduced-motion`, focus styles and sticky headers covering focus, a `<main>`
    on every template, `lang`/`hreflang`.
    Run the `a11y` skill's script and checklist for this lens (§1–2 there); it runs full
    axe-core, the keyboard walk and the accessibility tree, which Lighthouse doesn't.
 5. **Real performance.** Against the budgets in the `design` skill (§4), measured as in §3.
-6. **Trust.** Privacy text vs. what actually loads (third-party scripts, cookies, injected
-   Cloudflare scripts); promises like "unsubscribe anytime" vs. how it works in code;
-   legal notice reachable; dead `href="#"`; privacy/404 consistent with the rest; security
-   headers; redirects (`www`, old domains, preview hosts).
+6. **Trust.** Privacy text vs. what actually loads: third-party scripts and every cookie,
+   and every `/cdn-cgi/*` request. Those are Cloudflare features someone switched on (Web
+   Analytics beacon, JavaScript Detections with `cf_clearance`, Email Obfuscation, managed
+   `robots.txt`, Rocket Loader) and the privacy text has to name them, so list them as
+   owner decisions, not noise. Promises like "unsubscribe anytime" vs. how it works in
+   code; legal notice (LSSI-CE) reachable from every page; dead `href="#"`; privacy/404
+   consistent with the rest; security headers; redirects (`www`, old domains, preview
+   hosts). **Regulated sectors:** healthcare sites (psychologists, clinics) also get the
+   sector's rules: professional association and registration number visible, no
+   guarantees of results, no testimonials or urgency, health data kept out of
+   third-party channels without warning (see `vendor/README.md` in `.github`). Tag as (H),
+   "not legal advice".
 
 ## 3. Method (all (O) evidence comes from here)
 
@@ -93,9 +118,17 @@ Work in the scratchpad (`$SCRATCH/review-<project>-<yyyy-mm>/`), never in the re
 ```bash
 S=~/.claude/skills/design-review/scripts/capture.sh
 OUT=$SCRATCH/review-echoes-2026-11
+LH_PAGES="home es detail privacy" \
 $S https://echoesofthegarden.com "$OUT" home: es:es/ devlog:devlog/ post:devlog/<slug>/ \
    detail:bestiary/<slug>/ privacy:privacy/ 404:no-existe/
 ```
+
+Every page is screenshotted; Lighthouse runs only on `LH_PAGES` (never the 404: it fails on
+non-200 pages and holds the shared lock while it retries). The script first prints a
+`STATUS` line for any page that doesn't answer 200: either a wrong path in your command or
+a finding (a legal page that 404s). Lighthouse runs from all reviews share one lock, so
+when several reviews run in parallel keep `LH_PAGES` to about four pages each; the script
+says when it is waiting for the lock.
 
 It writes `shots/<page>_<width>.png` at 1280, 390 and 900 px (900 catches the nav breaking
 between desktop and mobile layouts) and `lh/<page>_<mobile|desktop>.json`, printing one
@@ -136,24 +169,38 @@ It prints JSON: page height and section offsets, offset of the first large media
 first form, text under 12 px (with samples), targets under 24 and 44 px, `<main>` count,
 broken `aria-*` id references, `href="#"` links, `scroll-padding-top`, whether any CSS
 handles reduced motion, all cookies including `httpOnly` ones (`document.cookie` can't see
-those, and privacy claims depend on them), and which sections stay hidden with JS off.
+those, and privacy claims depend on them), and with JS off: hidden sections (after
+CSS-only entry animations finish), Cloudflare-obfuscated emails (they don't work without
+JS) and `<noscript>` text.
 Check what "first large media" actually is in the screenshot: it may be decoration, not a
 product image. Run it at 390 and 1280, and on each template.
 
-**Below the fold, visually:** use Chrome (claude-in-chrome) to look at sections. Scroll
+**Below the fold, visually:** headless first: `chromium --headless=new --window-size=390,9000
+--screenshot=…` gives the whole page in one tall image, then crop it into parts to look at
+(reveal effects may not have fired; check in Chrome if a section is blank). When
+claude-in-chrome is available and no other review shares the browser, use it to look at
+sections: scroll
 with `document.getElementById(id).scrollIntoView()` plus a ~900 ms wait so reveal effects
 fire, then screenshot. **Don't trust `resize_window`** for widths (asked for 390, it gave
 322, 500 and 899): use it to look, and `measure.mjs` for numbers at exact widths. Keyboard
 focus: Tab through the first screen in Chrome and check the ring is visible and not under
 a sticky header. Close every tab you opened.
 
-**curl checks** (always `curl -m 15`, some hosts hang): `curl -sI` on the root (headers,
+**curl checks** (always `curl -m 15`, some hosts hang; send a browser User-Agent with
+`-A`: Cloudflare only injects its analytics beacon and challenge scripts into requests that
+look like a browser, so a bare curl misses exactly the scripts the privacy text must name): `curl -sI` on the root (headers,
 CSP), a 404, a URL without its trailing slash (expect 301/308, not 302/307), `www.`, old
 domains and preview hosts (expect 301s); `sitemap.xml` (count `<loc>`, hreflang
 alternates), `robots.txt`; external pages from the intent file, grepped for a link back.
-If a host doesn't answer at all, retry through the main domain's edge
+If a host doesn't answer at all, first ask its authoritative nameserver
+(`dig +short <host> @<ns>`): no record is a real DNS bug, and the next step would hide it.
+Only then retry through the main domain's edge
 (`curl --resolve <host>:443:<ip-of-main-domain> https://<host>/`): if that 301s, the
 redirect is fine and it's local network or DNS, so report it as unconfirmed.
+When a whole site is unreachable that way (seen in 2026-11: Cloudflare's 188.114.96.x/97.x
+range timed out from José's network while other Cloudflare IPs worked), run the scripts
+through a working edge with `HOST_RULES='MAP <host> <ip-that-works>'`: `capture.sh`,
+`measure.mjs` and `a11y.mjs` all pass it to Chromium. Say so in the report header.
 
 **Code cross-checks (read only):** the source templates the intent file names (findings
 point to them, not to generated HTML), JS observers, and the server code behind any

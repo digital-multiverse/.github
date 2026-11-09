@@ -15,7 +15,9 @@ if (!entry) { console.error('puppeteer-core not found: run capture.sh (npx light
 const { default: puppeteer } = await import(entry);
 const chrome = execSync('command -v chromium || command -v google-chrome-stable || command -v google-chrome', { shell: '/bin/bash' }).toString().trim();
 
-const browser = await puppeteer.launch({ executablePath: chrome, headless: true });
+const browser = await puppeteer.launch({ executablePath: chrome, headless: true,
+  // HOST_RULES='MAP host ip' routes around a local network block (see design-review SKILL.md).
+  args: process.env.HOST_RULES ? [`--host-resolver-rules=${process.env.HOST_RULES}`] : [] });
 try {
   const page = await browser.newPage();
   await page.setViewport({ width: +width, height: +height, isMobile: +width < 700, hasTouch: +width < 700 });
@@ -26,7 +28,7 @@ try {
 
   const m = await page.evaluate(() => {
     const top = e => Math.round(e.getBoundingClientRect().top + scrollY);
-    const visible = e => { const r = e.getBoundingClientRect(), s = getComputedStyle(e); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
+    const visible = e => { const r = e.getBoundingClientRect(), s = getComputedStyle(e); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && +s.opacity > 0; };
     const small = [...document.querySelectorAll('body *')].filter(e =>
       [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()) && visible(e) && parseFloat(getComputedStyle(e).fontSize) < 12);
     const targets = [...document.querySelectorAll('a[href],button,input,select,textarea,[role=button],[tabindex]:not([tabindex="-1"])')].filter(visible)
@@ -41,7 +43,7 @@ try {
     const form = document.querySelector('form');
     return {
       innerWidth, scrollHeight: document.body.scrollHeight,
-      horizontalScroll: document.documentElement.scrollWidth > innerWidth,
+      horizontalScroll: document.documentElement.scrollWidth > innerWidth, // a11y.mjs names the culprits at 320 px
       lang: document.documentElement.lang, main: document.querySelectorAll('main,[role=main]').length,
       firstLargeMediaTop: img ? top(img) : null, firstFormTop: form ? top(form) : null,
       sections: [...document.querySelectorAll('section[id],main > [id]')].map(s => `${s.id}@${top(s)}+${s.offsetHeight}`),
@@ -60,6 +62,13 @@ try {
   await nojs.setJavaScriptEnabled(false);
   await nojs.setViewport({ width: +width, height: +height });
   await nojs.goto(url, { waitUntil: 'load', timeout: 60000 });
+  await new Promise(r => setTimeout(r, 2500)); // let CSS-only entry animations finish, they are not JS-dependent
+  m.noJs = await nojs.evaluate(() => ({
+    // Cloudflare Email Obfuscation rewrites addresses into /cdn-cgi/l/email-protection, decoded by JS.
+    obfuscatedEmails: document.querySelectorAll('a[href*="/cdn-cgi/l/email-protection"],[data-cfemail]').length,
+    mailtoLinks: document.querySelectorAll('a[href^="mailto:"]').length,
+    noscriptText: [...document.querySelectorAll('noscript')].map(n => n.textContent.trim().slice(0, 80)).filter(Boolean),
+  }));
   m.noJsHiddenSections = await nojs.evaluate(() => [...document.querySelectorAll('section')].filter(s => +getComputedStyle(s).opacity === 0 || [...s.querySelectorAll('*')].some(e => e.offsetHeight > 50 && +getComputedStyle(e).opacity === 0)).map(s => s.id || s.className));
   console.log(JSON.stringify({ url, ...m }, null, 2));
 } finally { await browser.close(); }

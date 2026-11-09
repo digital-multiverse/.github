@@ -36,31 +36,45 @@ Needs the Lighthouse npx cache (`npx -y lighthouse@13.0.1 --version` once): it u
 puppeteer-core and axe-core, so nothing new is installed. Run it on every template and
 on every page with a form. It prints JSON:
 
-- `axeViolations`: axe-core 4.x, WCAG 2.2 A/AA plus best practice. Lighthouse runs only
-  a subset of these, so a Lighthouse a11y score of 100 doesn't mean this list is empty.
-- `axeIncomplete`: what axe couldn't decide, usually contrast over images or gradients.
-  Check each one by eye in a screenshot; don't report them unchecked.
-- `keyboard`, `keyboardNoRing`, `keyboardCovered`, `keyboardNotScrolledIntoView`: Tab
-  order (up to 60 stops), stops with no visible focus ring, focus hidden under a fixed or
-  sticky element (2.4.11), focus that ends up off screen. The last one can come from
-  reveal animations; confirm in a screenshot before reporting.
+- `axeViolations`: axe-core 4.x, WCAG 2.2 A/AA plus best practice, run after scrolling
+  through and forcing reveal animations to their final state (axe skips invisible
+  elements, which is how a 1.9:1 link passed both axe and Lighthouse on Echoes).
+  Lighthouse runs only a subset of these rules, so a Lighthouse a11y score of 100 doesn't
+  mean this list is empty.
+- `axeIncomplete`: what axe couldn't decide, with selectors, usually contrast over images
+  or gradients. Check each one by eye in a screenshot; don't report them unchecked.
+- `keyboard`, `keyboardNoRing`, `keyboardWeakRing`, `keyboardCovered`,
+  `keyboardNotScrolledIntoView`: Tab order (up to 60 stops); stops whose focus looks the
+  same as unfocused; rings that are only a shadow, a border change or an outline under
+  2 px (grouped, so a site-wide style is one line; under 2 px misses 2.4.13 AAA, and a
+  faint shadow can fail 2.4.7 AA, so look at one in a screenshot); focus hidden under a
+  fixed or sticky element (2.4.11); focus that ends up off screen.
+- `mobileMenu`: at 390 px, the menu button is focused, opened with Enter, then Tab and
+  Escape are pressed. Expect: `aria-expanded` turns true, the label changes ("Close
+  menu"), Tab lands inside the menu, and Escape closes it and returns focus to the button.
+  `found: false` with a visible menu means it isn't exposed as expandable (checkbox hacks,
+  clickable divs), which is a 4.1.2 finding.
 - `unnamedControls`: buttons, links and fields with no accessible name in the real tree.
 - `textSpacingClipped`: content clipped by the 1.4.12 spacing override.
-- `reflow320HorizontalScroll`: two-way scrolling at 320 px (1.4.10).
+- `reflow320Overflow`: the elements that stick out at 320 px (1.4.10); empty means no
+  horizontal scroll.
 - `reducedMotion`: infinite animations and playing videos left running with
   `prefers-reduced-motion: reduce`.
 
 ## 2. What the script can't judge
 
-Go through these by hand. Each one has broken on our sites before or is likely to.
+Go through these by hand. Each one has broken on our sites before or is likely to. A
+one-off check that needs code (one menu, one form state) is fine as a throwaway script in
+the scratchpad; if the same check is needed on a second site, propose adding it to
+`a11y.mjs` instead.
 
 - **Forms** (newsletter, contact, bookings, shop checkout): every field has a visible
   label, errors are announced next to the field and say how to fix them, required fields
   are marked in text, not only colour, honeypots are hidden from screen readers and
   keyboard (`tabindex="-1"`, `aria-hidden`), the success message is announced
   (`role="status"`).
-- **Menus and dialogs:** the mobile menu button has `aria-expanded`, focus moves into the
-  menu and back out, Escape closes it, no focus trap. The same for cookie banners and
+- **Menus and dialogs:** the script tests the mobile menu; check desktop dropdowns and
+  dialogs the same way (focus in, Escape out, no trap). The same for cookie banners and
   WhatsApp floating buttons, which must not cover content or focus.
 - **Images:** alt text says what the image shows, in the page's language. Decorative
   images have `alt=""`. Screenshots of a game or a photo portfolio need real descriptions:
