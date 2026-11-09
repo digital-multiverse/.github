@@ -88,6 +88,8 @@ draft goes into the repo only after the user answers.
    and against the other project sites, which often disagree; sources checked against the
    project's own sourcing rules (CLAUDE.md, intent file). On news or data sites this is
    where the most important findings are.
+   For a line-by-line language pass (back-translations, UI terms against the app's
+   strings), run the `copy-review` skill and link its report.
 4. **Accessibility beyond Lighthouse.** Text < 12 px, targets < 44 px (under 24 px fails
    WCAG 2.2 AA unless the 2.5.8 spacing or inline-link exception applies: check before
    tagging it a WCAG failure), broken `aria-*` references, content hidden until JS runs,

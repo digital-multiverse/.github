@@ -85,7 +85,8 @@ taste-skill's redesign protocol when the page already exists. Add to the plan:
   the home page.
 - **Copy check:** every claim on the page is in "Promises"; nothing in "What we must not
   say" appears. Write copy with the `copywriting` skill when there's a lot of it, then pass
-  it through `no-ai-slop`.
+  it through `no-ai-slop`. In every locale, run `copy-review` before handing over: it catches
+  literal translations and double meanings the English-centred skills miss.
 
 ## 3. Stack: build where the project already builds
 

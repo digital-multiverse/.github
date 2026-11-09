@@ -26,6 +26,7 @@ const browser = await puppeteer.launch({ executablePath: chrome, headless: true,
   args: process.env.HOST_RULES ? [`--host-resolver-rules=${process.env.HOST_RULES}`] : [] });
 const open = async (w, opts = {}) => {
   const page = await browser.newPage();
+  await page.setBypassCSP(true); // sites with style-src 'self' block the injected focus/reveal styles
   if (opts.reducedMotion) await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
   await page.setViewport({ width: w, height: 900 });
   await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
