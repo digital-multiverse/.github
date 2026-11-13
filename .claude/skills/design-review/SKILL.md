@@ -3,7 +3,8 @@ name: design-review
 description: >
   Repeatable product and design review of a LIVE website of any digital-multiverse project
   (echoesofthegarden.com, comparavoto.es, lucentumvisuals.com, imperiogourmet.com,
-  remembart.com, josejpg.com…). Reviewer only, never edits: opens the real pages at
+  remembart.com, josejpg.com, elenapastorpsicologia.com, digital-multiverse.com,
+  elrincondellibro.com…). Reviewer only, never edits: opens the real pages at
   1280/390/900 px, measures real performance (PageSpeed or local Lighthouse, isolating the
   cause), checks with curl, and judges clarity, CTAs, copy and languages, accessibility and
   trust against the project's docs/design-intent.md. Output is a prioritised S/M/L report

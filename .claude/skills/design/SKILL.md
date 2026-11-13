@@ -3,7 +3,8 @@ name: design
 description: >
   Design or redesign a website, landing page, page section or app screen for any
   digital-multiverse project (Echoes of the Garden, comparavoto, lucentumvisuals,
-  imperiogourmet, remembart, josejpg, domainzone…). Adds the studio layer on top of
+  imperiogourmet, remembart, josejpg, elenapastorpsicologia, digital-multiverse,
+  elrincondellibro, domainzone…). Adds the studio layer on top of
   frontend-design and taste-skill: each project's docs/design-intent.md (brand, audience,
   CTAs, what not to say), the real stack (static sites and Cloudflare Workers, WordPress),
   performance budgets (LCP, TBT, page weight), accessibility floor (text ≥ 12 px, targets
@@ -91,11 +92,12 @@ taste-skill's redesign protocol when the page already exists. Add to the plan:
 ## 3. Stack: build where the project already builds
 
 Use what the repo already uses. No new framework, CSS library, font service or build step
-without the user's OK, because every one is another thing to keep alive across nine
-projects.
+without the user's OK, because every one is another thing to keep alive across every
+project.
 
-- **Static sites on Cloudflare Workers** (Echoes web, comparavoto with Astro, remembart
-  app-site, josejpg with Vite): edit the source templates or build scripts named in the
+- **Static sites on Cloudflare Workers** (Echoes web, comparavoto and elrincondellibro
+  with Astro, remembart app-site, josejpg, elenapastorpsicologia and digital-multiverse
+  with Vite + Solid prerender): edit the source templates or build scripts named in the
   intent file, never the generated output (`dist/`, generated `index.html`). Headers and
   CSP live in `_headers`/`wrangler.jsonc`/the worker: a new third-party font, script or
   embed needs a CSP change, so prefer self-hosting from the same origin. Anything in the
