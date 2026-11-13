@@ -21,6 +21,8 @@ One line each: trap → why → fix. Add every new one found in a review (with p
 - **AI tells in Spanish:** «en el mundo actual», «sin lugar a dudas», «descubre cómo»,
   «potenciar», «sumérgete», «llevar al siguiente nivel», «no solo X, sino también Y» as a reveal.
 - **«X dignos de una pared»** → calque of "worthy of a wall"; say what is true: «Marcos que parecen de verdad». (remembart 2026-11)
+- **«Ascua», «Pulso», «Rastro» as common words** → in a game whose canonical names are these words, the common word reads as the name (affinity, tier). Use a synonym: «Cada brasa», not «Cada ascua». (echoes 2026-11)
+- **«lo único» / «el único» for a genderless being** → reads as a thing or as masculine; use «la única presencia». (echoes 2026-11)
 
 ## Italian (it-IT)
 
@@ -35,6 +37,10 @@ One line each: trap → why → fix. Add every new one found in a review (with p
   anche Y» as a reveal, «a portata di clic».
 - **fermarsi su una foto** → "to stop (oneself) on a photo"; the person doesn't stop, the photo does: «lasciare fissa una foto». (remembart 2026-11)
 - **colore pieno** → understood, but «tinta unita» is the usual term. (remembart 2026-11)
+- **«in %s» with a place name** → Italian needs the articulated preposition (nelle Radici, nella Marea, nel giardino); «in il giardino» is ungrammatical. Use «Qualcosa si muove: %s» or one string per place. (echoes 2026-11)
+- **«uno» for a genderless being** → it is masculine; use «una presenza». (echoes 2026-11)
+- **«un giorno lontano»** → means "a distant day", not "a day away"; use «un giorno d'assenza». (echoes 2026-11)
+- **«l'eco» is feminine** in the singular: «Eco dorata», not «Eco dorato». (echoes 2026-11)
 
 ## English
 
